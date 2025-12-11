@@ -251,8 +251,69 @@ function QuestionInput({ question, value, onChange }: { question: Question, valu
                     })}
                 </div>
             );
-        // Add other types as needed
+        case 'DROPDOWN':
+            return (
+                <div className="relative">
+                    <select
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5 appearance-none bg-white"
+                        value={value || ''}
+                        onChange={(e) => onChange(e.target.value)}
+                    >
+                        <option value="" disabled>Select an option</option>
+                        {question.options?.map((opt) => (
+                            <option key={opt.id} value={opt.value}>
+                                {opt.label}
+                            </option>
+                        ))}
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">
+                        ▼
+                    </div>
+                </div>
+            );
+        case 'LINEAR_SCALE':
+            // Logic to determine range provided by validation or defaults
+            // seed uses validation: { min: 1, max: 5, minLabel: "...", maxLabel: "..." }
+            // schema defines validation as Json?. We cast it here safely.
+            const min = (question.validation as any)?.min || 1;
+            const max = (question.validation as any)?.max || 5;
+            const range = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+
+            return (
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between text-sm text-neutral-500 px-1">
+                        <span>{(question.validation as any)?.minLabel}</span>
+                        <span>{(question.validation as any)?.maxLabel}</span>
+                    </div>
+                    <div className="flex justify-between items-center gap-2">
+                        {range.map((num) => (
+                            <label key={num} className="flex flex-col items-center gap-2 cursor-pointer group">
+                                <span className="text-sm font-medium text-neutral-600 group-hover:text-black">{num}</span>
+                                <div className={cn(
+                                    "w-10 h-10 rounded-full border flex items-center justify-center transition-all",
+                                    Number(value) === num
+                                        ? "border-black bg-black text-white"
+                                        : "border-neutral-200 hover:border-black/50"
+                                )}>
+                                    {Number(value) === num && <div className="w-3 h-3 rounded-full bg-white" />}
+                                </div>
+                                <input
+                                    type="radio"
+                                    name={question.id}
+                                    className="hidden"
+                                    checked={Number(value) === num}
+                                    onChange={() => onChange(num)}
+                                />
+                            </label>
+                        ))}
+                    </div>
+                </div>
+            );
+        case 'SECTION_BREAK':
+            // Render nothing for the input part, as Title/Description handle the UI
+            return <div className="h-0" />;
+
         default:
-            return <div className="text-neutral-400 italic">Unsupported question type</div>;
+            return <div className="text-neutral-400 italic">Unsupported question type: {question.type}</div>;
     }
 }
