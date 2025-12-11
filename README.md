@@ -11,6 +11,30 @@ Project Evalia is a modern, AI-powered form builder and response analysis platfo
 - **Role-Based Access**: Secure environment with support for multiple roles (Admin, Recruiter, Hiring Manager).
 - **Responsive Design**: Optimized for fully functional use across desktop and mobile devices.
 
+## Demo Availability
+
+> [!NOTE]
+> **Live Demo Coming Soon!**
+> We are currently finalizing the hosted demo environment. Check back shortly for a link to try Project Evalia directly in your browser without any setup.
+
+## Example Use Case: Automated Candidate Screening
+
+**Scenario**: A hiring manager needs to screen 100+ applicants for a "Senior Product Manager" role.
+
+1.  **Create Form**: The manager creates a screening form using the Drag-and-Drop Builder.
+    -   *Question 1*: "Describe a time you managed a product crisis." (Long Text)
+    -   *Question 2*: "How do you prioritize backlog items?" (Short Text)
+    -   *AI Settings*: "Grade answers based on 'clarity', 'strategic thinking', and 'user-centricity'."
+
+2.  **Collect Responses**: The public link is shared in the job description. Candidates submit their answers.
+
+3.  **Automated Analysis**: As responses flow in, Project Evalia's AI automatically:
+    -   Summarizes each candidate's response.
+    -   Assigns a suitability score (e.g., 85/100).
+    -   Flags high-potential candidates based on the custom criteria.
+
+4.  **Result**: The hiring manager saves hours of manual reading and focuses only on the top 10% of candidates.
+
 ## Architecture Summary
 
 The project follows a **Monorepo** structure separating the frontend and backend applications, enabling clear separation of concerns while sharing type safety and conventions.
@@ -34,93 +58,6 @@ graph TD
 | **Database** | PostgreSQL | Relational database managed via Prisma ORM. |
 | **AI** | Google Gemini | Generative AI model for response processing. |
 | **Language** | TypeScript | End-to-end type safety. |
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js (v20 or higher)
-- PostgreSQL (Local instance or cloud connection)
-- NPM or Yarn
-
-### Installation
-
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/steph1902/project-evalia.git
-    cd project-evalia
-    ```
-
-2.  **Install dependencies:**
-    ```bash
-    # Install backend dependencies
-    cd apps/api
-    npm install
-
-    # Install frontend dependencies (in a new terminal)
-    cd ../web
-    npm install
-    ```
-
-3.  **Database Setup:**
-    Ensure your PostgreSQL database is running.
-    ```bash
-    cd apps/api
-    npx prisma generate
-    npx prisma db push
-    ```
-
-### Environment Configuration
-
-Create a `.env` file in `apps/api` with the following variables:
-
-```env
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/evalia?schema=public"
-
-# Auth (JWT)
-JWT_SECRET="your-super-secret-key"
-JWT_EXPIRATION="1d"
-
-# AI Configuration
-GEMINI_API_KEY="your-google-gemini-api-key"
-```
-
-## Usage Guide
-
-### Running Locally
-
-To run the full stack locally effectively, you will need two terminal windows.
-
-**Terminal 1: Backend (API)**
-```bash
-cd apps/api
-npm run start:dev
-# Server starts at http://localhost:3000
-# Swagger docs at http://localhost:3000/api
-```
-
-**Terminal 2: Frontend (Web)**
-```bash
-cd apps/web
-npm run dev
-# App starts at http://localhost:3001 (or 3000 if port free)
-```
-
-### Common Workflows
-
-1.  **Creating a Form**:
-    - Navigate to Dashboard -> "Create Form".
-    - Drag questions from the sidebar to the canvas.
-    - Click "Save Draft".
-
-2.  **Publishing**:
-    - Click "Publish" in the form builder.
-    - Copy the generated public link.
-
-3.  **Submitting Responses**:
-    - Open the public link in an incognito window.
-    - Fill out the form and submit.
 
 ## Project Structure
 
