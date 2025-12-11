@@ -1,18 +1,23 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* 
+   Tailwind v4 handles dark mode via 'dark' variant 
+   or CSS variables if configured. 
+   Keeping it simple light/dark for now or system preferrence if auto.
+   But we removed the dark media query earlier to enforce light mode style 
+   consistency with the dashboard design provided in layout.
+*/
 
 body {
   color: var(--foreground);

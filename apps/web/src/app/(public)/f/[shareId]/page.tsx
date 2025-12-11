@@ -1,3 +1,5 @@
+'use client';
+
 import { PublicFormRenderer } from '@/components/public/public-form-renderer';
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api-client';

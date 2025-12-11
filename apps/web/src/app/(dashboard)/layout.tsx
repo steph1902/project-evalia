@@ -23,7 +23,7 @@ export default function DashboardLayout({
                         <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white font-bold">
                             F
                         </div>
-                        <span className="font-bold text-xl">FormGenius</span>
+                        <span className="font-bold text-xl">Project Evalia</span>
                     </Link>
 
                     <Button className="w-full mb-8 justify-start" size="lg">

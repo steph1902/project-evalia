@@ -7,6 +7,12 @@ import { Prisma } from '@prisma/client';
 export class FormsService {
     constructor(private prisma: PrismaService) { }
 
+    /**
+     * Creates a new form with nested questions and settings.
+     * @param userId - ID of the user creating the form
+     * @param dto - Data transfer object containing form details
+     * @returns The created form with its relations
+     */
     async create(userId: string, dto: CreateFormDto) {
         const { questions, settings, ...formData } = dto;
 
@@ -39,6 +45,10 @@ export class FormsService {
         });
     }
 
+    /**
+     * Retrieves all forms for a specific user.
+     * Includes response counts.
+     */
     async findAll(userId: string) {
         return this.prisma.form.findMany({
             where: { createdById: userId },
@@ -51,6 +61,11 @@ export class FormsService {
         });
     }
 
+    /**
+     * Retrieves a single form by ID, verifying ownership.
+     * @throws NotFoundException if form doesn't exist
+     * @throws ForbiddenException if user doesn't own the form
+     */
     async findOne(userId: string, id: string) {
         const form = await this.prisma.form.findUnique({
             where: { id },

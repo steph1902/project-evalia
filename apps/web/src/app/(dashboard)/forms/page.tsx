@@ -37,7 +37,7 @@ export default function DashboardPage() {
     // Since I can't be sure of the type match without checking backend payload closely, I'll be conservative.
 
     // Quick hack for _count type if backend sends it
-    const totalResponses = forms.reduce((acc, form: any) => acc + (form._count?.responses || 0), 0);
+    const totalResponses = Array.isArray(forms) ? forms.reduce((acc, form: any) => acc + (form._count?.responses || 0), 0) : 0;
     // Average score is hard without data.
 
     return (
@@ -120,8 +120,16 @@ export default function DashboardPage() {
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <Button variant="ghost" size="sm" asChild onClick={(e) => e.stopPropagation()}>
-                                                    <Link href={`/f/${form.shareId}`} target="_blank">View Public</Link>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        window.open(`/f/${form.shareId}`, '_blank');
+                                                    }}
+                                                >
+                                                    View Public
                                                 </Button>
                                                 <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-neutral-900 transition-colors" />
                                             </div>

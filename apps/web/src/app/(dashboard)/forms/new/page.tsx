@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect } from 'react';
 import { FormBuilder } from '@/components/forms/form-builder/form-builder';
 import { useFormBuilderStore } from '@/stores/form-builder-store';
