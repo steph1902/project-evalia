@@ -1,0 +1,404 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== USERS & AUTH ====================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  name          String
+  avatarUrl     String?
+  role          UserRole  @default(RECRUITER)
+  
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  
+  forms         Form[]
+  notes         InternalNote[]
+  activities    Activity[]
+  
+  emailVerified Boolean   @default(false)
+  isActive      Boolean   @default(true)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastLoginAt   DateTime?
+  
+  @@index([email])
+  @@index([organizationId])
+}
+
+enum UserRole {
+  ADMIN
+  RECRUITER
+  HIRING_MANAGER
+  VIEWER
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  logoUrl     String?
+  
+  users       User[]
+  forms       Form[]
+  
+  settings    Json     @default("{}")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([slug])
+}
+
+model RefreshToken {
+  id          String   @id @default(cuid())
+  token       String   @unique
+  userId      String
+  expiresAt   DateTime
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([token])
+}
+
+// ==================== FORMS ====================
+
+model Form {
+  id              String      @id @default(cuid())
+  title           String
+  description     String?
+  shareId         String      @unique @default(cuid())
+  
+  status          FormStatus  @default(DRAFT)
+  
+  createdById     String
+  createdBy       User        @relation(fields: [createdById], references: [id])
+  
+  organizationId  String?
+  organization    Organization? @relation(fields: [organizationId], references: [id])
+  
+  questions       Question[]
+  responses       FormResponse[]
+  
+  settings        FormSettings?
+  
+  publishedAt     DateTime?
+  closedAt        DateTime?
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@index([shareId])
+  @@index([createdById])
+  @@index([organizationId])
+  @@index([status])
+}
+
+enum FormStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  ARCHIVED
+}
+
+model FormSettings {
+  id                      String    @id @default(cuid())
+  formId                  String    @unique
+  form                    Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
+  
+  collectEmail            Boolean   @default(true)
+  requireEmail            Boolean   @default(true)
+  allowMultipleSubmissions Boolean  @default(false)
+  showProgressBar         Boolean   @default(true)
+  shuffleQuestions        Boolean   @default(false)
+  
+  confirmationTitle       String    @default("Thank you!")
+  confirmationMessage     String    @default("Your response has been recorded.")
+  redirectUrl             String?
+  
+  scheduledOpenAt         DateTime?
+  scheduledCloseAt        DateTime?
+  maxResponses            Int?
+  
+  aiAnalysisEnabled       Boolean   @default(true)
+  scoringCriteria         Json?     // ScoringCriteria type
+  
+  theme                   Json?     // Custom theme settings
+  
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+}
+
+model Question {
+  id              String          @id @default(cuid())
+  formId          String
+  form            Form            @relation(fields: [formId], references: [id], onDelete: Cascade)
+  
+  type            QuestionType
+  title           String
+  description     String?
+  placeholder     String?
+  
+  required        Boolean         @default(false)
+  order           Int
+  
+  options         QuestionOption[]
+  validation      Json?           // ValidationRules type
+  
+  // AI-specific settings
+  aiWeight        Int             @default(5)  // 0-10
+  aiInstructions  String?         // Custom instructions for AI
+  
+  isActive        Boolean         @default(true)
+  
+  answers         Answer[]
+  
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  @@index([formId])
+  @@index([order])
+}
+
+enum QuestionType {
+  SHORT_TEXT
+  LONG_TEXT
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  DROPDOWN
+  LINEAR_SCALE
+  DATE
+  FILE_UPLOAD
+  SECTION_BREAK
+}
+
+model QuestionOption {
+  id          String    @id @default(cuid())
+  questionId  String
+  question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  value       String
+  label       String
+  order       Int
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@index([questionId])
+}
+
+// ==================== RESPONSES ====================
+
+model FormResponse {
+  id              String          @id @default(cuid())
+  formId          String
+  form            Form            @relation(fields: [formId], references: [id], onDelete: Cascade)
+  
+  respondentEmail String?
+  
+  status          ResponseStatus  @default(NEW)
+  
+  answers         Answer[]
+  aiAnalysis      AIAnalysis?
+  notes           InternalNote[]
+  
+  metadata        ResponseMetadata?
+  
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  @@index([formId])
+  @@index([respondentEmail])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum ResponseStatus {
+  NEW
+  REVIEWING
+  SHORTLISTED
+  REJECTED
+  HIRED
+}
+
+model Answer {
+  id          String        @id @default(cuid())
+  responseId  String
+  response    FormResponse  @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  
+  questionId  String
+  question    Question      @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  // Store different value types
+  textValue   String?
+  numberValue Float?
+  arrayValue  String[]      @default([])
+  dateValue   DateTime?
+  fileUrl     String?
+  
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  @@index([responseId])
+  @@index([questionId])
+}
+
+model ResponseMetadata {
+  id              String        @id @default(cuid())
+  responseId      String        @unique
+  response        FormResponse  @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  
+  ipAddress       String?
+  userAgent       String?
+  deviceType      DeviceType?
+  referrer        String?
+  
+  startedAt       DateTime
+  submittedAt     DateTime
+  completionTime  Int           // seconds
+  
+  createdAt       DateTime      @default(now())
+}
+
+enum DeviceType {
+  DESKTOP
+  MOBILE
+  TABLET
+}
+
+// ==================== AI ANALYSIS ====================
+
+model AIAnalysis {
+  id              String        @id @default(cuid())
+  responseId      String        @unique
+  response        FormResponse  @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  
+  overallScore    Float         // 0-100
+  confidence      Float         // 0-1
+  
+  summary         String
+  
+  strengths       Json          // AnalysisPoint[]
+  concerns        Json          // AnalysisPoint[]
+  keywords        Json          // Keyword[]
+  categoryScores  Json          // CategoryScore[]
+  sentiment       Json          // SentimentAnalysis
+  recommendations String[]
+  
+  // For debugging/audit
+  promptUsed      String        @db.Text
+  rawResponse     String        @db.Text
+  modelVersion    String
+  
+  processingTime  Int           // milliseconds
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  @@index([overallScore])
+}
+
+model AIBatchJob {
+  id              String            @id @default(cuid())
+  
+  status          BatchJobStatus    @default(PENDING)
+  totalItems      Int
+  processedItems  Int               @default(0)
+  failedItems     Int               @default(0)
+  
+  results         Json              // Array of results
+  error           String?
+  
+  startedAt       DateTime?
+  completedAt     DateTime?
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+enum BatchJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// ==================== COLLABORATION ====================
+
+model InternalNote {
+  id          String        @id @default(cuid())
+  responseId  String
+  response    FormResponse  @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
+  
+  content     String
+  
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  @@index([responseId])
+  @@index([userId])
+}
+
+model Activity {
+  id          String        @id @default(cuid())
+  
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
+  
+  type        ActivityType
+  entityType  String        // 'form', 'response', etc.
+  entityId    String
+  
+  metadata    Json?
+  
+  createdAt   DateTime      @default(now())
+  
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+enum ActivityType {
+  FORM_CREATED
+  FORM_PUBLISHED
+  FORM_CLOSED
+  FORM_DELETED
+  RESPONSE_RECEIVED
+  RESPONSE_STATUS_CHANGED
+  NOTE_ADDED
+  AI_ANALYSIS_COMPLETED
+}
+
+// ==================== DRAFTS ====================
+
+model ResponseDraft {
+  id          String    @id @default(cuid())
+  formId      String
+  
+  email       String?
+  answers     Json      // Partial answers
+  
+  expiresAt   DateTime
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@index([formId])
+  @@index([email])
+  @@index([expiresAt])
+}
